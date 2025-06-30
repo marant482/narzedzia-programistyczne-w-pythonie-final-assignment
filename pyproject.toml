@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.0"] #starsze wersje wymagają pliku setup.py
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "data-analyzer"
+version = "0.1.0"
+description = "Narzędzie do analizy danych, dedykowane do danych z Polskimi kodami terytorialnymi"
+authors = [
+    { name = "Marek Dudzinski", email = "ma.dudzinski@student.uw.edu.pl" },
+]
+
+requires-python = ">=3.10" #potrzebny do składni użyej w dataloader
+
+dependencies = [
+    "pandas",
+    "numpy",
+    "pytest",
+    "argparse",
+    "openpyxl",
+    "xlrd"
+]
