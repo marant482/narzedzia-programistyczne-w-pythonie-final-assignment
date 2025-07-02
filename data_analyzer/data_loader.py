@@ -1,7 +1,7 @@
 import pandas as pd
 import logging
 
-logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s', encoding='utf-8')
 
 
 def load_data(file_path: str, **kwargs) -> pd.DataFrame | None:

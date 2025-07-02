@@ -1,11 +1,11 @@
 import pandas as pd
 import logging
 
-logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s', encoding='utf-8')
 
 
 
-def usun_woj(df: pd.DataFrame, column: str = "Województwo", prefix: str = "Woj. ") -> pd.DataFrame:
+def usun_woj(df: pd.DataFrame, column: str = "Województwo", prefix: str = "WOJ. ") -> pd.DataFrame:
     """
         Usuwa "Woj. " z nazwy Województwa w kolumnie, lub inny podany prefix
     """
@@ -119,8 +119,26 @@ def zmien_nazwe(df: pd.DataFrame, old_name: str, new_name: str) -> pd.DataFrame:
     logging.info(f"Zmieniono nazwę kolumny '{old_name}' na '{new_name}'.")
     return df_copy
 
+def usun_puste_wiersze(df: pd.DataFrame, nazwa_kolumny: str="TERYT") -> pd.DataFrame:
+    """
+    usuwa puste wiersze z kolumny o wskazanej nazwie (domyślnie TERYT)
+    """
+    if nazwa_kolumny not in df.columns:
+        logging.warning(f"Kolumna '{nazwa_kolumny}' nie istnieje w DataFrame.")
+        return df
+    df_copy = df.copy()
+    # w niektórych datasetach, zamiast pustych wartości Nan, mieliśmy puste stringi (lub same białe znaki)
+    #zamienimy je na Nan, żeby się ich pozbyć
+    df_copy[nazwa_kolumny] = df_copy[nazwa_kolumny].replace(r'^\s*$', pd.NA, regex=True)
+    # ^ to początek, \s to biały znak *to dowolna ilość, $ to koniec
+    df_filtr=df_copy.dropna(subset=[nazwa_kolumny])
+    logging.info(f"usunięto {len(df_copy)-len(df_filtr)} pustych wierszy.")
+    return df_filtr
 
-def usun_krotkie(df: pd.DataFrame, column: str, wartosc: int=7) -> pd.DataFrame:
+
+
+
+def usun_krotkie(df: pd.DataFrame, column: str="TERYT", wartosc: int=7) -> pd.DataFrame:
     """
     usuwa wszystkie wiersze, które w danej kolumnie zawierają napis krótszy niż wskazna wartość
     """
@@ -143,7 +161,7 @@ def usun_krotkie(df: pd.DataFrame, column: str, wartosc: int=7) -> pd.DataFrame:
 
 
 
-def usun_odstepy(df: pd.DataFrame, column: str) -> pd.DataFrame:
+def usun_odstepy(df: pd.DataFrame, column: str="TERYT") -> pd.DataFrame:
     """
     Funkcja usuwa spacje i tabulacje w całej kolumnie
 
@@ -153,7 +171,7 @@ def usun_odstepy(df: pd.DataFrame, column: str) -> pd.DataFrame:
         return df
 
     df_copy = df.copy()
-    df_copy[column] = df_copy[column].str.strip()
+    df_copy[column] = df_copy[column].str.replace(' ', '')
     logging.info(f"Usunięto odstępy z kolumny '{column}'.")
     return df_copy
 
@@ -230,10 +248,10 @@ def zlacz_dzielnice(df: pd.DataFrame, sum_col: str, gmina_col: str="Gmina", powi
     df_bez_dzielnic = df.drop(indeksy_do_usuniecia)
     df_finalny = pd.concat([df_bez_dzielnic, zagregowane_miasta], ignore_index=True)
     df_finalny = df_finalny.reset_index(drop=True)
-    logging.info(f"Zakończono agregację. Liczba wierszy po operacji: {len(df_finalny)}.")
+    logging.info(f"Zakończono agregację. Usunięto: {len(df)-len(df_finalny)} wierszy.")
     return df_finalny
 
-def zlacz_gminy(df: pd.DataFrame, gmina_docelowa: str, gmina_do_wlaczenia: str, kolumna_wartosci: str, kolumna_nazw: str) -> pd.DataFrame:
+def zlacz_gminy(df: pd.DataFrame, gmina_docelowa, gmina_do_wlaczenia, kolumna_wartosci: str, kolumna_nazw: str) -> pd.DataFrame:
     """
     Funkckcja łączy dwa wiersze w jeden, sumując wybrany wiersz i pozostawiając resztę taką jak w pierwszym wierszu.
     Często mamy sytuacje, w ktorej jakas gmina odlacza się od starej i jest to uwzględnione w jednym zbiorze danych
@@ -263,11 +281,53 @@ def zlacz_gminy(df: pd.DataFrame, gmina_docelowa: str, gmina_do_wlaczenia: str, 
     return df_kopia
 
 
-def usun_dzielnice_miast:
-    #jezeli napisy w kolumnie maja dlugosc 7, to wywołuje funkcję usun_z_ostatnia_cyfra, usuwając wszystkie wiersze, które kończą się na 8 lub 9 i kończy pracę
-    #jeżeli jednak mają od razu dlugosc 6, to wywołuje funkcję zlacz_dzielnice
+def usun_dzielnice_miast(df: pd.DataFrame,teryt_col: str="TERYT") -> pd.DataFrame:
+    """
+    W 7 cyfrowych kodach terytorialnych, ostatnia cyfra równająca się 8 lub 9 oznacza dzielnice miast (których dane są również zagregowane w całej gminie)
+    Funkcja pozwala je łatwo usunąć.
+
+    """
+    if teryt_col not in df.columns:
+        logging.warning(f"Kolumna '{teryt_col}' nie istnieje.")
+        return df
+
+    if df.empty:
+        logging.info("DataFrame jest pusty.")
+        return df
+
+    teryt_pierwszego_wiersza = str(df[teryt_col].iloc[0])
+
+    warunek1 = teryt_pierwszego_wiersza.startswith("0") and len(teryt_pierwszego_wiersza) == 7
+    warunek2 = (not teryt_pierwszego_wiersza.startswith("0")) and len(teryt_pierwszego_wiersza) == 6 #jeżeli kody były zamienione na inta, to znika pierwsza cyfra
+
+    if warunek1 or warunek2:
+        df_przetworzony = usun_z_ostatnia_cyfra(df, column=teryt_col, cyfry=['8', '9'])
+        return df_przetworzony
+    else:
+        logging.info("Nie usuniętgo żadnych wierszy.")
+        return df
 
 
+def usun_rozdzielone_gminy_mw(df: pd.DataFrame, teryt_col: str="TERYT") -> pd.DataFrame:
+    """
+    Wywołuje funkcję usun_z_ostatnia_cyfra, usuwając wszystkie wiersze, które kończą się na 4 lub 5.
+    W kodach (7-cyfrowych) często mamy gminę miejsko-wiejską i oddzielnie miasto i wieś, zazwyczaj chcemy zostawić tylko gminę.
+    """
+    if teryt_col not in df.columns:
+        logging.warning(f"Kolumna '{teryt_col}' nie istnieje.")
+        return df
 
-def usun_rozdzielone_gminy_MW:
-    #wywołuje funkcję usun_z_ostatnia_cyfra, usuwając wszystkie wiersze, które kończą się na 4 lub 5
+    if df.empty:
+        logging.info("DataFrame jest pusty.")
+        return df
+
+    teryt_pierwszego_wiersza = str(df[teryt_col].iloc[0])
+
+    warunek1=teryt_pierwszego_wiersza.startswith("0") and len(teryt_pierwszego_wiersza)==7
+    warunek2=(not teryt_pierwszego_wiersza.startswith("0")) and len(teryt_pierwszego_wiersza)==6 #jeżeli kody były zamienione na inta, to znika pierwsza cyfra
+    if warunek1 or warunek2:
+        df_przetworzony = usun_z_ostatnia_cyfra(df, column=teryt_col, cyfry=['4', '5'])
+        return df_przetworzony
+    else:
+        logging.info("Nie usuniętgo żadnych wierszy.")
+        return df
