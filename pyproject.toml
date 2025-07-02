@@ -20,3 +20,6 @@ dependencies = [
     "openpyxl",
     "xlrd"
 ]
+
+[tool.setuptools]
+packages = ["data_analyzer"]
