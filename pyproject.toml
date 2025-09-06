@@ -16,9 +16,9 @@ dependencies = [
     "pandas",
     "numpy",
     "pytest",
-    "argparse",
-    "openpyxl",
-    "xlrd"
+    "openpyxl", #do czytania plików xlsx
+    "xlrd", #do czytania plików xls
+    "scipy"
 ]
 
 [tool.setuptools]
