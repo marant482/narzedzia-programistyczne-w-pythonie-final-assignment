@@ -5,7 +5,7 @@ from typing import Dict, Any
 
 def generuj_raport(wszystkie_dane_do_raportu: Dict[str, Any], output_path: str) -> bool:
     """
-    Zapisuje wyniki analizy do pliku w formacie JSON.
+    Zapisuje wyniki analizy w formacie JSON do wskazanego pliku .
 
     Funkcja tworzy jeden główny obiekt JSON, który zawiera wszystkie
     przekazane wyniki.
@@ -23,8 +23,8 @@ def generuj_raport(wszystkie_dane_do_raportu: Dict[str, Any], output_path: str) 
 
     try:
         with open(output_path, 'w', encoding='utf-8') as f:
-            json.dump(wszystkie_dane_do_raportu, f, ensure_ascii=False, indent=4)
-            #bez drugiego argumentu problem z polskimi znakami, ostatni argument poprawia czytelność
+            json.dump(wszystkie_dane_do_raportu, f, ensure_ascii=False, indent=4, default=int)
+            #bez drugiego argumentu problem z polskimi znakami, indent=4 poprawia czytelność, a default=int rozwiązuje problem typów z numpy
         logging.info(f"Raport pomyślnie zapisano w: {output_path}")
         return True
 
