@@ -3,6 +3,8 @@ import logging
 from typing import Dict, Any, List
 from scipy.stats import pearsonr
 
+logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s', encoding='utf-8')
+
 def oblicz_statystyki(df: pd.DataFrame, columns: List[str]) -> Dict[str, Dict[str, Any]]:
     """
     Oblicza i zwraca podstawowe statystyki (min, max, średnia, mediana)
@@ -45,6 +47,7 @@ def testuj_korelacje(df: pd.DataFrame, col1: str, col2: str, poziom_istotnosci: 
         df (pd.DataFrame): DataFrame zawierający dane.
         col1 (str): Nazwa pierwszej kolumny.
         col2 (str): Nazwa drugiej kolumny.
+        poziom_istotnosci (float): Poziom istotnosci (liczba z przedziału (0,1).
 
     Returns:
         Dict[str, Any]: Słownik zawierający wyniki testu hipotezy (nazwy kolumn, współczynnik korelacji, p-value oraz indykator czy p-value mniejsze od 5%).
