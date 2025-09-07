@@ -146,7 +146,7 @@ def main():
 
         statystyki={
             "statystyki wszystkich gmin": stat_wszystkie_gminy,
-            "statystyki gmin, w których istnieje firma z koncesją": stat_miejsc_z_koncesja,
+            "statystyki miejscowości, w których istnieje firma z koncesją": stat_miejsc_z_koncesja,
             "statystyki województw": stat_woj,
         }
 

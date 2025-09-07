@@ -163,7 +163,7 @@ def usun_krotkie(df: pd.DataFrame, column: str="TERYT", wartosc: int=7) -> pd.Da
 
 def usun_odstepy(df: pd.DataFrame, column: str="TERYT") -> pd.DataFrame:
     """
-    Funkcja usuwa spacje i tabulacje w całej kolumnie
+    Funkcja usuwa spacje w całej kolumnie
 
     """
     if column not in df.columns:
